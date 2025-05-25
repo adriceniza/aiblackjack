@@ -13,11 +13,11 @@ export default function Deck() {
 
   return (
     <div className={styles.deckContainer}>
-      {Array.from({ length: gameState?.remaining_cards }).map((_, i) => (
+      {Array.from({ length: remaining }).map((_, i) => (
         <div
           key={i}
           className={`${styles.cardBack} ${i === remaining - 1 }`}
-          style={{ top: i * 0.5 }}
+          style={{ transform: `translateY(${i * .1}px)` }}
         >
           <img src="/assets/cards/back.png" alt="Back" />
         </div>

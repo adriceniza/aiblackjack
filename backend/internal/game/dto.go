@@ -3,12 +3,13 @@ package game
 import "github.com/adriceniza/aiblackjack/backend/internal/constants"
 
 type PlayerDTO struct {
-	ID       int      `json:"id"`
-	Name     string   `json:"name"`
-	Hand     []string `json:"hand"`
-	IsDealer bool     `json:"is_dealer"`
-	IsBusted bool     `json:"is_busted"`
-	IsTurn   bool     `json:"is_turn"`
+	ID           int      `json:"id"`
+	Name         string   `json:"name"`
+	Hand         []string `json:"hand"`
+	IsDealer     bool     `json:"is_dealer"`
+	IsBusted     bool     `json:"is_busted"`
+	IsTurn       bool     `json:"is_turn"`
+	HasBlackjack bool     `json:"has_blackjack"`
 }
 
 type GameStateDTO struct {
@@ -69,11 +70,12 @@ func convertHandToDTO(hand []Card) []string {
 
 func (p *Player) ConvertToDTO() PlayerDTO {
 	return PlayerDTO{
-		ID:       p.ID,
-		Name:     p.Name,
-		Hand:     convertHandToDTO(p.Hand),
-		IsDealer: p.IsDealer,
-		IsTurn:   p.IsTurn,
+		ID:           p.ID,
+		Name:         p.Name,
+		Hand:         convertHandToDTO(p.Hand),
+		IsDealer:     p.IsDealer,
+		IsTurn:       p.IsTurn,
+		HasBlackjack: p.HasBlackjack,
 	}
 }
 

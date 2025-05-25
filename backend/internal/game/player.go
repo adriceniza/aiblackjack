@@ -8,13 +8,14 @@ import (
 )
 
 type Player struct {
-	ID       int
-	Name     string
-	Hand     []Card
-	IsDealer bool
-	IsBusted bool
-	Conn     *websocket.Conn
-	IsTurn   bool
+	ID           int
+	Name         string
+	Hand         []Card
+	IsDealer     bool
+	IsBusted     bool
+	Conn         *websocket.Conn
+	IsTurn       bool
+	HasBlackjack bool
 }
 
 func NewPlayer(id int, name string, isDealer bool) *Player {

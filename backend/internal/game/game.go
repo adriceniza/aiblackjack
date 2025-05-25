@@ -17,7 +17,7 @@ type Game struct {
 }
 
 func NewGame(playerNames []string) *Game {
-	deck := Shuffle(Deck)
+	deck := NewShuffledDeck(Deck)
 	players := make([]*Player, len(playerNames))
 	for i, name := range playerNames {
 		players[i] = NewPlayer(i, name, false)
@@ -112,11 +112,14 @@ func (g *Game) DealInitialCards() error {
 }
 
 func (g *Game) NextRound() {
-	g.Deck = Shuffle(Deck)
+	if len(g.Deck) < len(Deck) {
+		g.Deck = NewShuffledDeck(Deck)
+	}
 
 	for _, p := range g.Players {
 		p.Hand = []Card{}
 		p.IsBusted = false
+		p.HasBlackjack = false
 	}
 
 	g.Dealer.Hand = []Card{}
@@ -132,11 +135,21 @@ func (g *Game) StartRound() {
 
 	for _, p := range g.Players {
 		if p.IsBlackjack() {
-			g.PlayDealersTurn()
+			p.HasBlackjack = true
+		}
+	}
+
+	for _, p := range g.Players {
+		if !p.HasBlackjack {
+			g.Players[g.CurrentPlayerIndex].IsTurn = true
 			break
 		}
 	}
-	g.Players[g.CurrentPlayerIndex].IsTurn = true
+
+	if g.AllPlayersBlackjack() {
+		g.PlayDealersTurn()
+		return
+	}
 
 	g.broadcast(g.GetGameStateDTO())
 }
@@ -173,4 +186,14 @@ func (g *Game) NextTurn() {
 
 	log.Println("No player left to play")
 	g.PlayDealersTurn()
+}
+
+func (g *Game) AllPlayersBlackjack() bool {
+	for _, p := range g.Players {
+		if !p.HasBlackjack {
+			return false
+		}
+	}
+
+	return true
 }
