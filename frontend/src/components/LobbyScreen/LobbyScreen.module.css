@@ -1,0 +1,10 @@
+.lobbyContainer {
+    display: flex;
+    flex-direction: column;
+    background-color: #395243;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100svh;
+    gap: 30px;
+}

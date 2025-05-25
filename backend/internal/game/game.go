@@ -1,10 +1,11 @@
 package game
 
 import (
+	"log"
+	"sync"
 	"time"
 
-	constants "github.com/adriceniza/aiblackjack/backend/internal"
-	"github.com/gorilla/websocket"
+	"github.com/adriceniza/aiblackjack/backend/internal/constants"
 )
 
 type Game struct {
@@ -12,6 +13,7 @@ type Game struct {
 	Players            []*Player
 	CurrentPlayerIndex int
 	Dealer             *Player
+	WriteMutex         sync.Mutex
 }
 
 func NewGame(playerNames []string) *Game {
@@ -28,16 +30,20 @@ func NewGame(playerNames []string) *Game {
 		Players:            players,
 		Dealer:             dealer,
 		CurrentPlayerIndex: players[0].ID,
+		WriteMutex:         sync.Mutex{},
 	}
 }
 
-func (g *Game) PlayDealersTurn() GameStateDTO {
+func (g *Game) PlayDealersTurn() {
 	for i := range g.Dealer.Hand {
 		g.Dealer.Hand[i].Visible = true
 	}
 
 	for g.Dealer.HandValue() < 17 {
-		g.Dealer.Hand = append(g.Dealer.Hand, PickCardsFromDeck(&g.Deck, 1)...)
+		card := PickCardsFromDeck(&g.Deck, 1)[0]
+		g.Dealer.Hand = append(g.Dealer.Hand, card)
+		g.broadcast(g.GetGameStateDTO())
+		time.Sleep(400 * time.Millisecond)
 	}
 
 	winners, pushes := g.DetermineWinners()
@@ -49,8 +55,14 @@ func (g *Game) PlayDealersTurn() GameStateDTO {
 	gameState.Winners = convertPlayersToDTO(winners)
 	gameState.Pushes = convertPlayersToDTO(pushes)
 
-	return gameState
+	log.Println("Broadcasting game state WINNERS")
+	log.Println(gameState.Winners)
+	g.broadcast(gameState)
 
+	go func() {
+		time.Sleep(5 * time.Second)
+		g.NextRound()
+	}()
 }
 
 func (g *Game) DetermineWinners() (winners []*Player, pushes []*Player) {
@@ -72,37 +84,93 @@ func (g *Game) DetermineWinners() (winners []*Player, pushes []*Player) {
 		}
 	}
 
-	return
+	return winners, pushes
 }
 
-func (g *Game) DealInitialCards(conn *websocket.Conn) error {
+func (g *Game) DealInitialCards() error {
 	// Ronda 1
 	for _, p := range g.Players {
 		p.Hand = append(p.Hand, PickCardsFromDeck(&g.Deck, 1)...)
-		if err := conn.WriteJSON(g.GetGameStateDTO()); err != nil {
-			return err
-		}
+		g.broadcast(g.GetGameStateDTO())
 		time.Sleep(200 * time.Millisecond)
 	}
 	g.Dealer.Hand = append(g.Dealer.Hand, PickCardsFromDeck(&g.Deck, 1)...)
-	if err := conn.WriteJSON(g.GetGameStateDTO()); err != nil {
-		return err
-	}
+	g.broadcast(g.GetGameStateDTO())
 	time.Sleep(200 * time.Millisecond)
 
 	// Ronda 2
 	for _, p := range g.Players {
 		p.Hand = append(p.Hand, PickCardsFromDeck(&g.Deck, 1)...)
-		if err := conn.WriteJSON(g.GetGameStateDTO()); err != nil {
-			return err
-		}
+		g.broadcast(g.GetGameStateDTO())
 		time.Sleep(200 * time.Millisecond)
 	}
 	g.Dealer.Hand = append(g.Dealer.Hand, PickCardsFromDeck(&g.Deck, 1)...)
 	g.Dealer.Hand[1].Visible = false
-	if err := conn.WriteJSON(g.GetGameStateDTO()); err != nil {
-		return err
-	}
+	g.broadcast(g.GetGameStateDTO())
 
 	return nil
+}
+
+func (g *Game) NextRound() {
+	g.Deck = Shuffle(Deck)
+
+	for _, p := range g.Players {
+		p.Hand = []Card{}
+		p.IsBusted = false
+	}
+
+	g.Dealer.Hand = []Card{}
+	g.Dealer.IsBusted = false
+
+	g.StartRound()
+}
+
+func (g *Game) StartRound() {
+	if err := g.DealInitialCards(); err != nil {
+		log.Println("Error al repartir cartas:", err)
+	}
+
+	for _, p := range g.Players {
+		if p.IsBlackjack() {
+			g.PlayDealersTurn()
+			break
+		}
+	}
+	g.Players[g.CurrentPlayerIndex].IsTurn = true
+
+	g.broadcast(g.GetGameStateDTO())
+}
+
+func (g *Game) broadcast(state GameStateDTO) {
+	g.WriteMutex.Lock()
+	defer g.WriteMutex.Unlock()
+
+	for _, p := range g.Players {
+		if p.Conn != nil {
+			if err := p.Conn.WriteJSON(state); err != nil {
+				log.Println("Error sending game state:", err)
+
+				p.Conn.Close()
+				p.Conn = nil
+			}
+		}
+	}
+}
+
+func (g *Game) NextTurn() {
+	if g.CurrentPlayerIndex < len(g.Players) {
+		g.Players[g.CurrentPlayerIndex].IsTurn = false
+	}
+
+	for i := g.CurrentPlayerIndex + 1; i < len(g.Players); i++ {
+		if !g.Players[i].IsBusted {
+			g.CurrentPlayerIndex = i
+			g.Players[i].IsTurn = true
+			g.broadcast(g.GetGameStateDTO())
+			return
+		}
+	}
+
+	log.Println("No player left to play")
+	g.PlayDealersTurn()
 }

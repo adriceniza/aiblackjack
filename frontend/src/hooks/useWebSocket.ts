@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+
+
 export function useWebSocket(url: string) {
   const [messages, setMessages] = useState<any[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
@@ -17,7 +19,8 @@ export function useWebSocket(url: string) {
     socketRef.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
+        console.log("Mensaje recibido:", data);
+        setMessages((prev) => [...prev, data])
       } catch (error) {
         console.error("Error parseando mensaje WS", error);
       }
@@ -40,5 +43,5 @@ export function useWebSocket(url: string) {
     }
   };
 
-  return { messages, sendMessage, isConnected };
+  return { messages, sendMessage, isConnected, setMessages };
 }

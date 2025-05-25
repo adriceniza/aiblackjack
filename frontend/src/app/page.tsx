@@ -1,25 +1,16 @@
 "use client";
 
-import { usePlayer } from "@/context/PlayerContext";
-import GameTable from "@/components/GameTable/GameTable";
-import GameEntry from "@/components/GameEntry/GameEntry";
-import { useEffect } from "react";
+import GameTableScreen from "@/components/GameTableScreen/GameTableScreen";
+import LobbyScreen from "@/components/LobbyScreen/LobbyScreen";
+import { useGame } from "@/context/GameContext";
 
 export default function Page() {
-  const { playerName } = usePlayer();
+  const game = useGame();
 
-
-  useEffect(() => {
-    console.log("Player name:", playerName);
-  }, [playerName]);
-
-
-  if (!playerName) {
-    return <GameEntry />;
+  if (game.appState === "LOBBY") {
+    return <LobbyScreen />;
   }
 
-
-  return (
-    <GameTable />
-  );
+  return <GameTableScreen />
+  
 }

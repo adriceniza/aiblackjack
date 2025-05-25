@@ -1,6 +1,6 @@
 package game
 
-import constants "github.com/adriceniza/aiblackjack/backend/internal"
+import "github.com/adriceniza/aiblackjack/backend/internal/constants"
 
 type PlayerDTO struct {
 	ID       int      `json:"id"`
@@ -8,6 +8,7 @@ type PlayerDTO struct {
 	Hand     []string `json:"hand"`
 	IsDealer bool     `json:"is_dealer"`
 	IsBusted bool     `json:"is_busted"`
+	IsTurn   bool     `json:"is_turn"`
 }
 
 type GameStateDTO struct {
@@ -18,6 +19,7 @@ type GameStateDTO struct {
 	State              string      `json:"state"`
 	Winners            []PlayerDTO `json:"winners"`
 	Pushes             []PlayerDTO `json:"pushes"`
+	RemainingCards     int         `json:"remaining_cards"`
 }
 
 func (g *Game) GetGameStateDTO() GameStateDTO {
@@ -29,6 +31,7 @@ func (g *Game) GetGameStateDTO() GameStateDTO {
 			Hand:     convertHandToDTO(p.Hand),
 			IsDealer: p.IsDealer,
 			IsBusted: p.IsBust(),
+			IsTurn:   p.IsTurn,
 		}
 	}
 
@@ -38,6 +41,7 @@ func (g *Game) GetGameStateDTO() GameStateDTO {
 		Hand:     convertHandToDTO(g.Dealer.Hand),
 		IsDealer: true,
 		IsBusted: g.Dealer.IsBust(),
+		IsTurn:   g.Dealer.IsTurn,
 	}
 
 	return GameStateDTO{
@@ -45,6 +49,8 @@ func (g *Game) GetGameStateDTO() GameStateDTO {
 		Dealer:             dealerState,
 		CurrentPlayerIndex: g.CurrentPlayerIndex,
 		Type:               constants.GAME_STATE,
+		State:              constants.STATE_PLAYING,
+		RemainingCards:     len(g.Deck),
 	}
 }
 
@@ -67,6 +73,7 @@ func (p *Player) ConvertToDTO() PlayerDTO {
 		Name:     p.Name,
 		Hand:     convertHandToDTO(p.Hand),
 		IsDealer: p.IsDealer,
+		IsTurn:   p.IsTurn,
 	}
 }
 
