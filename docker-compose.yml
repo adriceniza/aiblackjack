@@ -1,0 +1,21 @@
+services:
+  frontend:
+    ports:
+      - "3000:3000"
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    networks:
+      - aiblackjack
+  backend:
+    ports:
+      - "8080:8080" 
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    networks:
+      - aiblackjack
+
+networks:
+  aiblackjack:
+    driver: bridge
