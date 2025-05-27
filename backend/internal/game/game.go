@@ -82,6 +82,7 @@ func (g *Game) PlayDealersTurn() {
 	gameState.State = constants.END_GAME
 	gameState.Winners = convertPlayersToDTO(winners)
 	gameState.Pushes = convertPlayersToDTO(pushes)
+	
 
 	log.Println("Broadcasting game state WINNERS")
 	log.Println(gameState.Winners)
@@ -196,9 +197,10 @@ func (g *Game) StartRound() {
 		}
 	}
 
-	for _, p := range g.Players {
+	for i, p := range g.Players {
 		if !p.HasBlackjack {
-			g.Players[g.CurrentPlayerIndex].IsTurn = true
+			p.IsTurn = true
+			g.CurrentPlayerIndex = i
 			break
 		}
 	}
