@@ -35,6 +35,7 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		lobbyManager.Delete(conn)
 		conn.Close()
+		log.Println("Connection closed and cleaned up")
 	}()
 
 	for {
@@ -47,81 +48,123 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("Mensaje recibido: %s", msg)
 
-		var req map[string]any
+		var req map[string]interface{}
 		if err := json.Unmarshal(msg, &req); err != nil {
-			log.Println("Error parseando mensaje:", err)
+			log.Println("Invalid JSON:", err)
 			continue
 		}
 
-		switch req["type"] {
-		case constants.QUICK_JOIN:
-			log.Println("Iniciando nuevo juego")
+		reqType, ok := req["type"].(string)
+		if !ok {
+			log.Println("Message 'type' missing or invalid")
+			continue
+		}
 
-			game := FindOrCreateGame();
-			
-			game.AddPlayer(req["player_name"].(string), conn)
-			
-			lobbyManager.Create(conn, game)
+		switch reqType {
+		case constants.QUICK_JOIN:
+			handleQuickJoin(conn, req)
 
 		case constants.PLAYER_ACTION:
-			gs, ok := lobbyManager.GetByConn(conn)
-
-			if !ok {
-				log.Println("No se encontro el juego")
-				break
-			}
-
-			handlePlayerAction(gs.Game, req["action"].(string))
+			handlePlayerActionMsg(conn, req)
 
 		case constants.PLACE_BET:
-			log.Println("Procesando apuesta")
+			handlePlaceBetMsg(conn, req)
 
-			gs, ok := lobbyManager.GetByConn(conn)
-			if !ok {
-				log.Println("No se encontro el juego")
-				break
-			}
-
-			player, error := gs.Game.GetPlayerByConn(conn)
-			if error != nil {
-				log.Println("Jugador no encontrado:", error)
-				break
-			}
-
-			if req["bet"] == nil {
-				log.Println("Apuesta no proporcionada")
-				break
-			}
-
-			player.PlaceBet(int(req["bet"].(float64)))
+		default:
+			log.Println("Unknown message type:", reqType)
 		}
 	}
 }
+
+
+
+func handleQuickJoin(conn *websocket.Conn, req map[string]interface{}) {
+	name, ok := req["player_name"].(string)
+	if !ok {
+		log.Println("Missing or invalid 'player_name'")
+		return
+	}
+
+	log.Println("Handling QUICK_JOIN for:", name)
+
+	g := FindOrCreateGame()
+
+	_, err := g.AddPlayer(name, conn)
+	if err {
+		log.Println("Could not add player to game")
+		return
+	}
+
+	lobbyManager.Create(conn, g)
+}
+
+func handlePlayerActionMsg(conn *websocket.Conn, req map[string]interface{}) {
+	action, ok := req["action"].(string)
+	if !ok {
+		log.Println("Missing or invalid 'action'")
+		return
+	}
+
+	gs, ok := lobbyManager.GetByConn(conn)
+	if !ok {
+		log.Println("Game session not found for connection")
+		return
+	}
+
+	currentPlayer := gs.Game.Players[gs.Game.CurrentPlayerIndex]
+	if currentPlayer.Conn != conn {
+		log.Println("Not this player's turn")
+		return
+	}
+
+	switch action {
+	case constants.HIT:
+		currentPlayer.Hit(gs.Game)
+	case constants.STAND:
+		gs.Game.NextTurn()
+	default:
+		log.Println("Invalid action:", action)
+	}
+}
+
+func handlePlaceBetMsg(conn *websocket.Conn, req map[string]interface{}) {
+	gs, ok := lobbyManager.GetByConn(conn)
+	if !ok {
+		log.Println("Game session not found for placing bet")
+		return
+	}
+
+	player, err := gs.Game.GetPlayerByConn(conn)
+	if err != nil {
+		log.Println("Player not found:", err)
+		return
+	}
+
+	betAmountFloat, ok := req["bet"].(float64)
+	if !ok {
+		log.Println("Invalid or missing bet amount")
+		return
+	}
+
+	betAmount := int(betAmountFloat)
+	player.PlaceBet(betAmount)
+	log.Printf("Player %s placed bet: %d", player.Name, betAmount)
+}
+
+
+
 
 func FindOrCreateGame() (*game.Game) {
-	gamesAvailable := lobbyManager.GetAvailableGames()
-	if len(gamesAvailable) > 0 {
+	games := lobbyManager.GetAvailableGames()
+	if len(games) > 0 {
 		log.Println("Un juego disponible encontrado, uniendo al jugador")
-		gameCode := gamesAvailable[0]
-		game, exists := lobbyManager.GetGame(gameCode)
-		if exists {
-			return game
+		gameCode := games[0]
+		if g, exists := lobbyManager.GetGame(gameCode); exists {
+			log.Println("Joining existing game: ", gameCode)
+			return g
 		}
 	}
 
+	log.Println("Creating new game")
 	return game.NewGame()
-}
-
-func handlePlayerAction(game *game.Game, action string) {
-	player := game.Players[game.CurrentPlayerIndex]
-
-	if action == constants.HIT {
-		player.Hit(game)
-		return
-	}
-	if action == constants.STAND {
-		game.NextTurn()
-		return
-	}
-
 }

@@ -79,7 +79,11 @@ func (p *Player) HandValue() int {
 func (p *Player) Hit(g *Game) {
 	p.Hand = append(p.Hand, PickCardsFromDeck(&g.Deck, 1)...)
 	g.broadcast(g.GetGameStateDTO())
-	g.NextTurn()
+
+	if p.IsBust() || p.Is21() {
+		g.NextTurn()
+		return
+	}
 }
 
 func (g *Game) GetPlayerById(id int) (player *Player, exists bool) {

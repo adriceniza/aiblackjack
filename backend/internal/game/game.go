@@ -217,7 +217,11 @@ func (g *Game) NextRound() {
 	if len(g.Deck) < len(Deck) {
 		g.Deck = NewShuffledDeck(Deck)
 	}
+	g.ResetGameForNextRound()
+	g.StartBettingPhase()
+}
 
+func (g *Game) ResetGameForNextRound() {
 	for _, p := range g.Players {
 		p.Hand = []Card{}
 		p.IsBusted = false
@@ -230,7 +234,7 @@ func (g *Game) NextRound() {
 	g.Dealer.Hand = []Card{}
 	g.Dealer.IsBusted = false
 
-	g.StartBettingPhase()
+	g.CurrentPlayerIndex = 0
 }
 
 func (g *Game) broadcast(state GameStateDTO) {
