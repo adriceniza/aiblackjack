@@ -1,13 +1,15 @@
-# Base
-FROM node:18-alpine AS builder
+FROM node:22.1.0-alpine
 
 WORKDIR /app
+
+COPY package.json package-lock.json* ./
+
+RUN npm install
+
 COPY . .
-RUN npm install && npm run build
 
-# Run stage
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app ./
+RUN npm run build
+
 EXPOSE 3000
-CMD ["npm", "start"]
+
+CMD ["npm", "run", "start"]
