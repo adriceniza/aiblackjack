@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
-import styles from './Results.module.css'
-import { useGame } from '@/context/GameContext';
-import { Player, WSMessageType } from '../GameTableScreen/GameTableScreen';
+import React, { useEffect, useRef, useState } from "react";
+import styles from "./Results.module.css";
+import { useGame } from "@/context/GameContext";
 import useSound from "use-sound";
+import { GameState } from "@/types/game";
+import { PlayerDTO } from "@/types/player";
 
 enum RESULTS {
   Winner = "winner",
@@ -11,7 +12,7 @@ enum RESULTS {
 }
 
 export default function Results() {
-  const { gameState, player } = useGame();
+  const { state, player, winners, pushes } = useGame();
   const [result, setResult] = useState<RESULTS>(RESULTS.Loser);
 
   const [playWinnerSound] = useSound("/assets/sounds/winner.mp3");
@@ -19,18 +20,18 @@ export default function Results() {
   const [playPushSound] = useSound("/assets/sounds/push.mp3");
 
   useEffect(() => {
-    if (!gameState || gameState.state !== WSMessageType.END_GAME) {
+    if (!state || state !== GameState.ROUND_ENDED) {
       return;
     }
 
     setResult(RESULTS.Loser);
 
-    if (gameState.winners.find((p: Player) => p.id === player.id)) {
+    if (winners?.find((p: PlayerDTO) => p.id === player?.id)) {
       setResult(RESULTS.Winner);
       playWinnerSound();
 
       return;
-    } else if (gameState.pushes.find((p: Player) => p.id === player.id)) {
+    } else if (pushes?.find((p: PlayerDTO) => p.id === player?.id)) {
       setResult(RESULTS.Push);
       playPushSound();
 
@@ -38,9 +39,9 @@ export default function Results() {
     }
 
     playLoserSound();
-  }, [gameState, player]);
+  }, [state, player, pushes, winners]);
 
-  if (!gameState || gameState.state !== WSMessageType.END_GAME) {
+  if (!state || state !== GameState.ROUND_ENDED) {
     return null;
   }
   return (

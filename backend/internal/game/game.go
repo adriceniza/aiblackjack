@@ -10,13 +10,14 @@ import (
 )
 
 type Game struct {
-	Deck               []string
-	Players            []*Player
-	CurrentPlayerIndex int
-	Dealer             *Player
-	WriteMutex         sync.Mutex
-	State              string
-	IsStarted         bool
+	Deck                []string
+	Players             []*Player
+	CurrentPlayerIndex  int
+	Dealer              *Player
+	WriteMutex          sync.Mutex
+	State               string
+	IsStarted           bool
+	WaitingCountdownEnd int64
 }
 
 func NewGame() *Game {
@@ -25,16 +26,18 @@ func NewGame() *Game {
 	dealer := NewPlayer(999, "Dealer", true)
 
 	game := &Game{
-		Deck:               deck,
-		Players:            []*Player{},
-		Dealer:             dealer,
-		CurrentPlayerIndex: 0,
-		WriteMutex:         sync.Mutex{},
+		Deck:                deck,
+		Players:             []*Player{},
+		Dealer:              dealer,
+		CurrentPlayerIndex:  0,
+		WriteMutex:          sync.Mutex{},
+		WaitingCountdownEnd: time.Now().UnixMilli() + constants.WAITING_FOR_PLAYERS_TIME_MS,
+		State:               constants.STATE_WAITING_FOR_PLAYERS,
 	}
 
 	go func() {
 		log.Println("Esperando 15 segundos para iniciar el juego")
-		time.Sleep(10 * time.Second)
+		time.Sleep(constants.WAITING_FOR_PLAYERS_TIME_MS * time.Millisecond)
 		game.IsStarted = true
 		log.Println("Iniciando fase de apuestas")
 		game.StartBettingPhase()
@@ -79,10 +82,9 @@ func (g *Game) PlayDealersTurn() {
 	g.SettleBets(winners, pushes)
 
 	gameState.Type = constants.GAME_STATE
-	gameState.State = constants.END_GAME
+	gameState.State = constants.STATE_ROUND_ENDED
 	gameState.Winners = convertPlayersToDTO(winners)
 	gameState.Pushes = convertPlayersToDTO(pushes)
-	
 
 	log.Println("Broadcasting game state WINNERS")
 	log.Println(gameState.Winners)
@@ -168,7 +170,7 @@ func (g *Game) StartBettingPhase() {
 			if g.AllPlayersPlacedBet() {
 				break
 			}
-	
+
 			time.Sleep(100 * time.Millisecond)
 		}
 
@@ -247,6 +249,7 @@ func (g *Game) broadcast(state GameStateDTO) {
 		if p.Conn != nil {
 			stateCopy := state
 			stateCopy.Player = p.ConvertToDTO()
+
 			if err := p.Conn.WriteJSON(stateCopy); err != nil {
 				log.Println("Error sending game state:", err)
 
@@ -295,6 +298,6 @@ func (g *Game) AllPlayersPlacedBet() bool {
 	return true
 }
 
-func (g *Game) IsFull () bool {
+func (g *Game) IsFull() bool {
 	return len(g.Players) >= constants.MAX_PLAYERS
 }

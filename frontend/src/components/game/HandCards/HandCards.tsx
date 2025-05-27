@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './HandCards.module.css'
-import { Player } from '../GameTableScreen/GameTableScreen';
+import { Player } from "../screens/GameTableScreen/GameTableScreen";
 import Card from '../Card/Card';
 
 export default function HandCards({ player }: { player: Player }) {

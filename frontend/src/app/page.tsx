@@ -1,28 +1,24 @@
 "use client";
 
-import BettingScreen from "@/components/BettingScreen/BettingScreen";
-import GameTableScreen from "@/components/GameTableScreen/GameTableScreen";
-import LobbyScreen from "@/components/LobbyScreen/LobbyScreen";
-import { AppState, useGame } from "@/context/GameContext";
+import GameTableScreen from "@/components/screens/GameTableScreen/GameTableScreen";
+import LobbyScreen from "@/components/screens/LobbyScreen/LobbyScreen";
+import WaitingScreen from "@/components/screens/WaitingScreen/WaitingScreen";
+import { useGame } from "@/context/GameContext";
+import { useEffect } from "react";
 
 export default function Page() {
-  const game = useGame();
+  const { isConnected, state } = useGame();
 
-  if (game.appState === AppState.WAITING) {
-    return (
-      <div className="flex h-screen items-center justify-center text-2xl">
-        Waiting for players...
-        {game.players?.map((player) => player?.name).join(", ")}
-      </div>
-    );
+  useEffect(() => {
+    console.log({ state, isConnected });
+  }, [state, isConnected]);
+
+  if (!isConnected) {
+    return <div>Waiting for WS</div>;
   }
 
-  if (game.appState === AppState.LOBBY) {
+  if (!state) {
     return <LobbyScreen />;
-  }
-
-  if (game.appState === AppState.BETTING) {
-    return <BettingScreen />;
   }
 
   return <GameTableScreen />;

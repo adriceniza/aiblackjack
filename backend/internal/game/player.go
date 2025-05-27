@@ -81,6 +81,9 @@ func (p *Player) Hit(g *Game) {
 	g.broadcast(g.GetGameStateDTO())
 
 	if p.IsBust() || p.Is21() {
+		if p.IsBust(){
+			p.IsBusted = true
+		}
 		g.NextTurn()
 		return
 	}

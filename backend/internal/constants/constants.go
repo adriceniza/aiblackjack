@@ -1,24 +1,22 @@
 package constants
 
 const (
-	QUICK_JOIN     = "quick_join"
-	JOIN_BY_CODE   = "join_by_code"
-
 	JOINED_SESSION = "joined_session"
-	NEW_PLAYER_JOINED = "new_player_joined"
-	
 	GAME_STATE     = "game_state"
-	PLAYER_ACTION  = "player_action"
-	DEALER_ACTION  = "dealer_action"
-	END_GAME       = "end_game"
+
 	HIT            = "hit"
 	STAND          = "stand"
-
-	PLACE_BET = "incoming_place_bet"
+	
+	PLAYER_ACTION  = "player_action"
+	QUICK_JOIN     = "quick_join"
+	PLACE_BET = "place_bet"
 
 	STATE_PLAYING = "playing"
-	STATE_ENDED   = "ended"
+	STATE_ROUND_ENDED   = "round_ended"
 	STATE_BETTING = "betting"
+	STATE_WAITING_FOR_PLAYERS = "waiting_for_players"
 
 	MAX_PLAYERS = 6
+
+	WAITING_FOR_PLAYERS_TIME_MS = 15000
 )

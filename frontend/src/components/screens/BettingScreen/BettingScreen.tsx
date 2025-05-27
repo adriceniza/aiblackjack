@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import styles from "./BettingScreen.module.css";
 import useSound from "use-sound";
 import { Coins } from "@/constants";
+import { WSOutcomingMessageType } from "@/types/game";
 function BettingScreen() {
   const { sendMessage, player } = useGame();
   const [betAmount, setBetAmount] = React.useState<number>(0);
@@ -12,7 +13,7 @@ function BettingScreen() {
   const handlePlaceBet = () => {
     if (player) {
       sendMessage({
-        type: "incoming_place_bet",
+        type: WSOutcomingMessageType.PLACE_BET,
         bet: betAmount,
       });
 

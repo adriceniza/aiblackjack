@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Rowdies } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/context/GameContext";
-import PlayerInfo from "@/components/PlayerInfo/PlayerInfo";
+import PlayerInfo from "@/components/game/PlayerInfo/PlayerInfo";
 
 const rowdies = Rowdies({
   variable: "--font-rowdies",

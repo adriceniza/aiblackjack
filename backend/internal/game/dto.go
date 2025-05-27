@@ -13,53 +13,39 @@ type PlayerDTO struct {
 	Balance      int      `json:"balance"`
 	CurrentBet   int      `json:"current_bet"`
 	HasPlacedBet bool     `json:"has_placed_bet"`
+	HandValue    int      `json:"hand_value"`
 }
 
 type GameStateDTO struct {
-	Players            []PlayerDTO `json:"players"`
-	Dealer             PlayerDTO   `json:"dealer"`
-	CurrentPlayerIndex int         `json:"current_player_index"`
-	Type               string      `json:"type"`
-	State              string      `json:"state"`
-	Winners            []PlayerDTO `json:"winners"`
-	Pushes             []PlayerDTO `json:"pushes"`
-	RemainingCards     int         `json:"remaining_cards"`
-	Timestamp          int64       `json:"timestamp"`
-	Player             PlayerDTO   `json:"player"`
+	Players             []PlayerDTO `json:"players"`
+	Dealer              PlayerDTO   `json:"dealer"`
+	CurrentPlayerIndex  int         `json:"current_player_index"`
+	Type                string      `json:"type"`
+	State               string      `json:"state"`
+	Winners             []PlayerDTO `json:"winners"`
+	Pushes              []PlayerDTO `json:"pushes"`
+	RemainingCards      int         `json:"remaining_cards"`
+	Timestamp           int64       `json:"timestamp"`
+	Player              PlayerDTO   `json:"player"`
+	WaitingCountdownEnd int64       `json:"waiting_countdown_end"`
 }
 
 func (g *Game) GetGameStateDTO() GameStateDTO {
 	playerStates := make([]PlayerDTO, len(g.Players))
 	for i, p := range g.Players {
-		playerStates[i] = PlayerDTO{
-			ID:           p.ID,
-			Name:         p.Name,
-			Hand:         convertHandToDTO(p.Hand),
-			IsDealer:     p.IsDealer,
-			IsBusted:     p.IsBust(),
-			IsTurn:       p.IsTurn,
-			Balance:      p.Balance,
-			CurrentBet:   p.CurrentBet,
-			HasPlacedBet: p.HasPlacedBet,
-		}
+		playerStates[i] = p.ConvertToDTO()
 	}
 
-	dealerState := PlayerDTO{
-		ID:       g.Dealer.ID,
-		Name:     g.Dealer.Name,
-		Hand:     convertHandToDTO(g.Dealer.Hand),
-		IsDealer: true,
-		IsBusted: g.Dealer.IsBust(),
-		IsTurn:   g.Dealer.IsTurn,
-	}
+	dealerState := g.Dealer.ConvertToDTO()
 
 	return GameStateDTO{
-		Players:            playerStates,
-		Dealer:             dealerState,
-		CurrentPlayerIndex: g.CurrentPlayerIndex,
-		Type:               constants.GAME_STATE,
-		State:              g.State,
-		RemainingCards:     len(g.Deck),
+		Players:             playerStates,
+		Dealer:              dealerState,
+		CurrentPlayerIndex:  g.CurrentPlayerIndex,
+		Type:                constants.GAME_STATE,
+		State:               g.State,
+		RemainingCards:      len(g.Deck),
+		WaitingCountdownEnd: g.WaitingCountdownEnd,
 	}
 }
 
@@ -85,6 +71,9 @@ func (p *Player) ConvertToDTO() PlayerDTO {
 		IsTurn:       p.IsTurn,
 		HasBlackjack: p.HasBlackjack,
 		Balance:      p.Balance,
+		CurrentBet:   p.CurrentBet,
+		IsBusted:     p.IsBusted,
+		HandValue:    p.HandValue(),
 	}
 }
 
