@@ -3,13 +3,15 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { WSIncomingMessageType } from "@/constants";
+import App from "next/app";
 
 const WS_URL = "ws://localhost:8080/ws";
 
-enum AppState {
+export enum AppState {
   LOBBY = "LOBBY",
   WAITING = "WAITING",
   IN_GAME = "IN_GAME",
+  BETTING = "BETTING",
 }
 
 interface GameContextType {
@@ -22,6 +24,7 @@ interface GameContextType {
   sendMessage: (msg: any) => void;
   isConnected: boolean;
   playerId: number | null;
+  player: any | null;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -31,21 +34,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [appState, setAppState] = useState<AppState>(AppState.LOBBY);
   const [gameState, setGameState] = useState<any | null>(null);
   const [playerId, setPlayerId] = useState<number | null>(null);
+  const [player, setPlayer] = useState<any | null>(null);
 
-  const { messages, setMessages, sendMessage, isConnected } = useWebSocket(WS_URL);
+  const { messages, setMessages, sendMessage, isConnected } =
+    useWebSocket(WS_URL);
 
   useEffect(() => {
     if (messages.length === 0) return;
 
-    messages.forEach((msg) => {
+    const sortedMessages = messages.sort((a, b) => a.timestamp - b.timestamp);
+
+    sortedMessages.forEach((msg) => {
       switch (msg.type) {
         case WSIncomingMessageType.JOINED_SESSION:
           setPlayerId(msg.id);
           setAppState(AppState.WAITING);
           break;
         case WSIncomingMessageType.GAME_STATE:
+          setPlayer(msg.players.find((p: any) => p.id === playerId));
           setGameState(msg);
-          setAppState(AppState.IN_GAME);
+
+          if (msg.state === "betting") {
+            setAppState(AppState.BETTING);
+          } else {
+            setAppState(AppState.IN_GAME);
+          }
+
           break;
         case WSIncomingMessageType.ERROR:
           setAppState(AppState.LOBBY);
@@ -53,7 +67,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Limpiar mensajes tras procesar
     setMessages([]);
   }, [messages]);
 
@@ -82,7 +95,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         quickJoin,
         sendMessage,
         isConnected,
-        playerId
+        playerId,
+        player,
       }}
     >
       {children}

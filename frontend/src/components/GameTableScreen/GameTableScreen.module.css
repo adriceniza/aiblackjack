@@ -15,5 +15,5 @@
 .bottomDeckContainer {
     display: flex;
     justify-content: flex-end;
-    padding: 80px;
+    padding-bottom: 80px;
 }

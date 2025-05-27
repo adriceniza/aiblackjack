@@ -10,6 +10,12 @@ const (
 	END_GAME       = "end_game"
 	HIT            = "hit"
 	STAND          = "stand"
-	STATE_PLAYING  = "playing"
-	STATE_ENDED    = "ended"
+
+	PLACE_BET = "incoming_place_bet"
+
+	STATE_PLAYING = "playing"
+	STATE_ENDED   = "ended"
+	STATE_BETTING = "betting"
+
+	MAX_PLAYERS = 6
 )

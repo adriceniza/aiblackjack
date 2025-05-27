@@ -1,0 +1,15 @@
+.playerInfoHeader {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    background: transparent;
+    color: #ffffff;
+    z-index: 10;
+    box-sizing: border-box;
+}

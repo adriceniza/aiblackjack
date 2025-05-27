@@ -1,22 +1,20 @@
 import React, { useEffect } from 'react'
 import styles from './Card.module.css'
+import useSound from "use-sound";
 
 interface Props {
-    card: string;
-    dragSoundRef: React.RefObject<HTMLAudioElement | null>;
+  card: string;
 }
 
-export default function Card({
-    card,
-    dragSoundRef
-}: Props) {
+export default function Card({ card }: Props) {
+  const [play] = useSound("/assets/sounds/drag.mp3");
 
-    useEffect(() => {
-        dragSoundRef.current = new Audio('/assets/sounds/drag.mp3');
-    }, [])
-    return (
-        <div className={styles.card}>
-            <img src={`/assets/cards/${card}.png`} alt={card} />
-        </div>
-    )
+  useEffect(() => {
+    play();
+  }, [play]);
+  return (
+    <div className={styles.card}>
+      <img src={`/assets/cards/${card}.png`} alt={card} />
+    </div>
+  );
 }

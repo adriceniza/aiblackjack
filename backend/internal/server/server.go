@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/adriceniza/aiblackjack/backend/internal/constants"
 	"github.com/adriceniza/aiblackjack/backend/internal/game"
@@ -56,6 +57,30 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 		switch req["type"] {
 		case constants.QUICK_JOIN:
 			log.Println("Iniciando nuevo juego")
+
+			gamesAvailable := lobbyManager.GetAvailableGames()
+			if len(gamesAvailable) > 0 {
+				log.Println("Un juego disponible encontrado, uniendo al jugador")
+				gameCode := gamesAvailable[0]
+				game, exists := lobbyManager.GetGame(gameCode)
+				if !exists {
+					log.Println("Juego no encontrado:", gameCode)
+					break
+				}
+				player, err := game.AddPlayer(req["player_name"].(string))
+				if err {
+					log.Println("Error al agregar jugador:", err)
+					break
+				}
+				player.Conn = conn
+
+				writeJSON(conn, &map[string]any{
+					"type": constants.JOINED_SESSION,
+					"id":   player.ID,
+				})
+				break
+			}
+
 			game := game.NewGame([]string{req["player_name"].(string)})
 			game.Players[0].Conn = conn
 
@@ -66,9 +91,13 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 				"id":   game.Players[0].ID,
 			})
 
-			writeJSON(conn, game.GetGameStateDTO())
-
-			game.StartRound()
+			go func(){
+				log.Println("Esperando 15 segundos para iniciar el juego")
+				time.Sleep(15 * time.Second)
+				game.IsStarted = true
+				log.Println("Iniciando fase de apuestas")
+				game.StartBettingPhase()
+			}()
 
 		case constants.PLAYER_ACTION:
 			gs, ok := lobbyManager.GetByConn(conn)
@@ -79,6 +108,28 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 			}
 
 			handlePlayerAction(gs.Game, req["action"].(string))
+		
+		case constants.PLACE_BET:
+			log.Println("Procesando apuesta")
+
+			gs, ok := lobbyManager.GetByConn(conn)			
+			if !ok {
+				log.Println("No se encontro el juego")
+				break
+			}
+
+			player, error := gs.Game.GetPlayerByConn(conn)
+			if error != nil {
+				log.Println("Jugador no encontrado:", error)
+				break
+			}
+
+			if req["bet"] == nil {
+				log.Println("Apuesta no proporcionada")
+				break
+			}
+
+			player.PlaceBet(int(req["bet"].(float64)))
 		}
 	}
 }

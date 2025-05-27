@@ -7,7 +7,7 @@ type Card struct {
 
 func PickCardsFromDeck(deck *[]string, num int) []Card {
 	pickedCards := make([]Card, num)
-	for i := 0; i < num; i++ {
+	for i := range num {
 		pickedCards[i] = Card{
 			Value:   (*deck)[i],
 			Visible: true,

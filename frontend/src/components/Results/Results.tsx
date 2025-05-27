@@ -2,52 +2,58 @@ import React, { useEffect, useRef, useState } from 'react'
 import styles from './Results.module.css'
 import { useGame } from '@/context/GameContext';
 import { Player, WSMessageType } from '../GameTableScreen/GameTableScreen';
+import useSound from "use-sound";
 
 enum RESULTS {
-    Winner = "winner",
-    Loser = "loser",
-    Push = "push",
+  Winner = "winner",
+  Loser = "loser",
+  Push = "push",
 }
 
 export default function Results() {
-    const { gameState, playerId } = useGame();
-    const [result, setResult] = useState<RESULTS>(RESULTS.Loser);
-    const audioRef = useRef<HTMLAudioElement>(null);
+  const { gameState, playerId } = useGame();
+  const [result, setResult] = useState<RESULTS>(RESULTS.Loser);
 
-    useEffect(() => {
-        if (!gameState || gameState.state !== WSMessageType.END_GAME) {
-            return;
-        }
+  const [playWinnerSound] = useSound("/assets/sounds/winner.mp3");
+  const [playLoserSound] = useSound("/assets/sounds/loser.mp3");
+  const [playPushSound] = useSound("/assets/sounds/push.mp3");
 
-        let audioSrc = '/assets/sounds/loser.mp3';
-        setResult(RESULTS.Loser);
-
-        if (gameState.winners.find((p: Player) => p.id === playerId)) {
-            setResult(RESULTS.Winner);
-            audioSrc = '/assets/sounds/winner.mp3';
-        } else if (gameState.pushes.find((p: Player) => p.id === playerId)) {
-            setResult(RESULTS.Push);
-            audioSrc = '/assets/sounds/push.mp3';
-        }
-
-        audioRef.current = new Audio(audioSrc);
-        audioRef.current.play().catch(console.error);
-
-    }, [gameState, playerId]);
-
+  useEffect(() => {
     if (!gameState || gameState.state !== WSMessageType.END_GAME) {
-        return null;
+      return;
     }
-    return (
-        <div className={styles.resultsContainer}>
-            <span className={styles[result]}>
-                {
-                    result === RESULTS.Winner ? "WINNER" :
-                    result === RESULTS.Loser ? "LOSER" :
-                    result === RESULTS.Push ? "PUSH" :
-                    "ERROR"
-                }
-            </span>
-        </div>
-    )
+
+    setResult(RESULTS.Loser);
+
+    if (gameState.winners.find((p: Player) => p.id === playerId)) {
+      setResult(RESULTS.Winner);
+      playWinnerSound();
+
+      return;
+    } else if (gameState.pushes.find((p: Player) => p.id === playerId)) {
+      setResult(RESULTS.Push);
+      playPushSound();
+
+      return;
+    }
+
+    playLoserSound();
+  }, [gameState, playerId]);
+
+  if (!gameState || gameState.state !== WSMessageType.END_GAME) {
+    return null;
+  }
+  return (
+    <div className={styles.resultsContainer}>
+      <span className={styles[result]}>
+        {result === RESULTS.Winner
+          ? "WINNER"
+          : result === RESULTS.Loser
+          ? "LOSER"
+          : result === RESULTS.Push
+          ? "PUSH"
+          : "ERROR"}
+      </span>
+    </div>
+  );
 }

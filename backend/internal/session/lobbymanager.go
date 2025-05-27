@@ -16,7 +16,6 @@ type LobbyManager struct {
 type GameSession struct {
 	Code string
 	Game *game.Game
-	conn *websocket.Conn
 }
 
 func NewLobbyManager() *LobbyManager {
@@ -42,8 +41,19 @@ func (lm *LobbyManager) Create(conn *websocket.Conn, game *game.Game) {
 	lm.sessions[code] = &GameSession{
 		Code: code,
 		Game: game,
-		conn: conn,
 	}
+}
+
+func (lm *LobbyManager) GetGame(code string) (*game.Game, bool) {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	session, exists := lm.sessions[code]
+	if !exists {
+		return nil, false
+	}
+
+	return session.Game, true
 }
 
 func (lm *LobbyManager) GetGameByConn(conn *websocket.Conn) (*game.Game, bool) {
@@ -51,8 +61,13 @@ func (lm *LobbyManager) GetGameByConn(conn *websocket.Conn) (*game.Game, bool) {
 	defer lm.mu.RUnlock()
 
 	for _, gs := range lm.sessions {
-		if gs.conn == conn {
-			return gs.Game, true
+		if gs.Game == nil {
+			continue
+		}
+		for _, player := range gs.Game.Players {
+			if player.Conn == conn {
+				return gs.Game, true
+			}
 		}
 	}
 
@@ -64,8 +79,13 @@ func (lm *LobbyManager) GetByConn(conn *websocket.Conn) (*GameSession, bool) {
 	defer lm.mu.RUnlock()
 
 	for _, gs := range lm.sessions {
-		if gs.conn == conn {
-			return gs, true
+		if gs.Game == nil {
+			continue
+		}
+		for _, player := range gs.Game.Players {
+			if player.Conn == conn {
+				return gs, true
+			}
 		}
 	}
 	return nil, false
@@ -78,9 +98,19 @@ func (lm *LobbyManager) Delete(conn *websocket.Conn) {
 	var gs *GameSession
 	var ok bool
 	for _, session := range lm.sessions {
-		if session.conn == conn {
-			gs = session
-			ok = true
+		if session.Game == nil {
+			continue
+		}
+
+		for _, player := range session.Game.Players {
+			if player.Conn == conn {
+				gs = session
+				ok = true
+				break
+			}
+		}
+
+		if ok {
 			break
 		}
 	}
@@ -90,4 +120,27 @@ func (lm *LobbyManager) Delete(conn *websocket.Conn) {
 	}
 
 	delete(lm.sessions, gs.Code)
+}
+
+func (lm *LobbyManager) GetAvailableGames() []string {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	var codes []string
+	for code := range lm.sessions {
+		if lm.sessions[code].Game == nil {
+			continue
+		}
+
+		if lm.sessions[code].Game.IsStarted {
+			continue
+		}
+
+		if lm.sessions[code].Game.IsFull() {
+			continue
+		}
+
+		codes = append(codes, code)
+	}
+	return codes
 }

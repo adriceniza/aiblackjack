@@ -14,6 +14,8 @@ type Game struct {
 	CurrentPlayerIndex int
 	Dealer             *Player
 	WriteMutex         sync.Mutex
+	State              string
+	IsStarted         bool
 }
 
 func NewGame(playerNames []string) *Game {
@@ -34,6 +36,18 @@ func NewGame(playerNames []string) *Game {
 	}
 }
 
+func (g *Game) AddPlayer(name string) (player *Player, err bool) {
+	if g.IsFull() {
+		return nil, true
+	}
+
+	player = NewPlayer(len(g.Players), name, false)
+	g.Players = append(g.Players, player)
+
+	log.Printf("Player %s added to the game", name)
+	return player, false
+}
+
 func (g *Game) PlayDealersTurn() {
 	for i := range g.Dealer.Hand {
 		g.Dealer.Hand[i].Visible = true
@@ -50,6 +64,8 @@ func (g *Game) PlayDealersTurn() {
 
 	gameState := g.GetGameStateDTO()
 
+	g.SettleBets(winners, pushes)
+
 	gameState.Type = constants.GAME_STATE
 	gameState.State = constants.END_GAME
 	gameState.Winners = convertPlayersToDTO(winners)
@@ -63,6 +79,21 @@ func (g *Game) PlayDealersTurn() {
 		time.Sleep(5 * time.Second)
 		g.NextRound()
 	}()
+}
+
+func (g *Game) SettleBets(winners []*Player, pushes []*Player) {
+	for _, player := range winners {
+		if player.HasBlackjack {
+			balanceWon := int(float64(player.CurrentBet) * 2.5)
+			player.Balance += balanceWon
+			continue
+		}
+		player.Balance += player.CurrentBet * 2
+	}
+
+	for _, player := range pushes {
+		player.Balance += player.CurrentBet
+	}
 }
 
 func (g *Game) DetermineWinners() (winners []*Player, pushes []*Player) {
@@ -111,24 +142,37 @@ func (g *Game) DealInitialCards() error {
 	return nil
 }
 
-func (g *Game) NextRound() {
-	if len(g.Deck) < len(Deck) {
-		g.Deck = NewShuffledDeck(Deck)
+func (g *Game) StartBettingPhase() {
+	g.State = constants.STATE_BETTING
+
+	g.broadcast(g.GetGameStateDTO())
+
+	timer := time.NewTimer(30 * time.Second)
+	done := make(chan struct{})
+
+	go func() {
+		for {
+			if g.AllPlayersPlacedBet() {
+				break
+			}
+	
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Println("Todos los jugadores han realizado sus apuestas, iniciando ronda")
+	case <-timer.C:
+		log.Println("Tiempo de apuestas agotado, iniciando ronda")
 	}
-
-	for _, p := range g.Players {
-		p.Hand = []Card{}
-		p.IsBusted = false
-		p.HasBlackjack = false
-	}
-
-	g.Dealer.Hand = []Card{}
-	g.Dealer.IsBusted = false
-
 	g.StartRound()
 }
 
 func (g *Game) StartRound() {
+	g.State = constants.STATE_PLAYING
 	if err := g.DealInitialCards(); err != nil {
 		log.Println("Error al repartir cartas:", err)
 	}
@@ -154,9 +198,31 @@ func (g *Game) StartRound() {
 	g.broadcast(g.GetGameStateDTO())
 }
 
+func (g *Game) NextRound() {
+	if len(g.Deck) < len(Deck) {
+		g.Deck = NewShuffledDeck(Deck)
+	}
+
+	for _, p := range g.Players {
+		p.Hand = []Card{}
+		p.IsBusted = false
+		p.HasBlackjack = false
+		p.IsTurn = false
+		p.CurrentBet = 0
+		p.HasPlacedBet = false
+	}
+
+	g.Dealer.Hand = []Card{}
+	g.Dealer.IsBusted = false
+
+	g.StartBettingPhase()
+}
+
 func (g *Game) broadcast(state GameStateDTO) {
 	g.WriteMutex.Lock()
 	defer g.WriteMutex.Unlock()
+
+	state.Timestamp = time.Now().UnixMilli()
 
 	for _, p := range g.Players {
 		if p.Conn != nil {
@@ -196,4 +262,18 @@ func (g *Game) AllPlayersBlackjack() bool {
 	}
 
 	return true
+}
+
+func (g *Game) AllPlayersPlacedBet() bool {
+	for _, p := range g.Players {
+		if !p.HasPlacedBet {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (g *Game) IsFull () bool {
+	return len(g.Players) >= constants.MAX_PLAYERS
 }

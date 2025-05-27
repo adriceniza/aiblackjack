@@ -10,6 +10,9 @@ type PlayerDTO struct {
 	IsBusted     bool     `json:"is_busted"`
 	IsTurn       bool     `json:"is_turn"`
 	HasBlackjack bool     `json:"has_blackjack"`
+	Balance      int      `json:"balance"`
+	CurrentBet   int      `json:"current_bet"`
+	HasPlacedBet bool     `json:"has_placed_bet"`
 }
 
 type GameStateDTO struct {
@@ -21,18 +24,22 @@ type GameStateDTO struct {
 	Winners            []PlayerDTO `json:"winners"`
 	Pushes             []PlayerDTO `json:"pushes"`
 	RemainingCards     int         `json:"remaining_cards"`
+	Timestamp          int64       `json:"timestamp"`
 }
 
 func (g *Game) GetGameStateDTO() GameStateDTO {
 	playerStates := make([]PlayerDTO, len(g.Players))
 	for i, p := range g.Players {
 		playerStates[i] = PlayerDTO{
-			ID:       p.ID,
-			Name:     p.Name,
-			Hand:     convertHandToDTO(p.Hand),
-			IsDealer: p.IsDealer,
-			IsBusted: p.IsBust(),
-			IsTurn:   p.IsTurn,
+			ID:           p.ID,
+			Name:         p.Name,
+			Hand:         convertHandToDTO(p.Hand),
+			IsDealer:     p.IsDealer,
+			IsBusted:     p.IsBust(),
+			IsTurn:       p.IsTurn,
+			Balance:      p.Balance,
+			CurrentBet:   p.CurrentBet,
+			HasPlacedBet: p.HasPlacedBet,
 		}
 	}
 
@@ -50,7 +57,7 @@ func (g *Game) GetGameStateDTO() GameStateDTO {
 		Dealer:             dealerState,
 		CurrentPlayerIndex: g.CurrentPlayerIndex,
 		Type:               constants.GAME_STATE,
-		State:              constants.STATE_PLAYING,
+		State:              g.State,
 		RemainingCards:     len(g.Deck),
 	}
 }

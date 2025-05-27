@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Rowdies } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/context/GameContext";
+import PlayerInfo from "@/components/PlayerInfo/PlayerInfo";
 
 const rowdies = Rowdies({
   variable: "--font-rowdies",
   subsets: ["latin"],
-  weight: "400"
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${rowdies.variable}`}>
         <GameProvider>
-          {children}
+          <PlayerInfo>{children}</PlayerInfo>
         </GameProvider>
       </body>
     </html>

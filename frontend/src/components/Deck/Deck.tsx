@@ -16,8 +16,8 @@ export default function Deck() {
       {Array.from({ length: remaining }).map((_, i) => (
         <div
           key={i}
-          className={`${styles.cardBack} ${i === remaining - 1 }`}
-          style={{ transform: `translateY(${i * .1}px)` }}
+          className={`${styles.cardBack} ${i === remaining - 1}`}
+          style={{ transform: `translateY(${i * 0.2}px)` }}
         >
           <img src="/assets/cards/back.png" alt="Back" />
         </div>
