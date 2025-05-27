@@ -8,6 +8,15 @@ import { AppState, useGame } from "@/context/GameContext";
 export default function Page() {
   const game = useGame();
 
+  if (game.appState === AppState.WAITING) {
+    return (
+      <div className="flex h-screen items-center justify-center text-2xl">
+        Waiting for players...
+        {game.players?.map((player) => player?.name).join(", ")}
+      </div>
+    );
+  }
+
   if (game.appState === AppState.LOBBY) {
     return <LobbyScreen />;
   }

@@ -25,6 +25,7 @@ type GameStateDTO struct {
 	Pushes             []PlayerDTO `json:"pushes"`
 	RemainingCards     int         `json:"remaining_cards"`
 	Timestamp          int64       `json:"timestamp"`
+	Player             PlayerDTO   `json:"player"`
 }
 
 func (g *Game) GetGameStateDTO() GameStateDTO {
@@ -83,6 +84,7 @@ func (p *Player) ConvertToDTO() PlayerDTO {
 		IsDealer:     p.IsDealer,
 		IsTurn:       p.IsTurn,
 		HasBlackjack: p.HasBlackjack,
+		Balance:      p.Balance,
 	}
 }
 

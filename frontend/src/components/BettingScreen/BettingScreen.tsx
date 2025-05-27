@@ -1,5 +1,5 @@
 import { useGame } from "@/context/GameContext";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./BettingScreen.module.css";
 import useSound from "use-sound";
 import { Coins } from "@/constants";
@@ -7,6 +7,7 @@ function BettingScreen() {
   const { sendMessage, player } = useGame();
   const [betAmount, setBetAmount] = React.useState<number>(0);
   const [coinsAdded, setCoinsAdded] = React.useState<number[]>([]);
+  const [placed, setPlaced] = useState<boolean>(false);
 
   const handlePlaceBet = () => {
     if (player) {
@@ -14,6 +15,8 @@ function BettingScreen() {
         type: "incoming_place_bet",
         bet: betAmount,
       });
+
+      setPlaced(true);
     }
   };
 
@@ -33,14 +36,18 @@ function BettingScreen() {
     });
   };
 
-  if (!player) {
-    return <div className={styles.bettingScreen}>Loading...</div>;
-  }
-
   useEffect(() => {
     const newAmount = coinsAdded.reduce((acc, coin) => acc + coin, 0);
     setBetAmount(newAmount);
   }, [coinsAdded]);
+
+  if (!player) {
+    return <div className={styles.bettingScreen}>Loading...</div>;
+  }
+
+  if (placed) {
+    return <div>Wating for other players</div>;
+  }
 
   return (
     <div className={styles.bettingScreen}>

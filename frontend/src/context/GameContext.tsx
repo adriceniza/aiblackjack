@@ -23,8 +23,8 @@ interface GameContextType {
   quickJoin: () => void;
   sendMessage: (msg: any) => void;
   isConnected: boolean;
-  playerId: number | null;
   player: any | null;
+  players?: any[];
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -33,8 +33,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [playerName, setPlayerName] = useState("");
   const [appState, setAppState] = useState<AppState>(AppState.LOBBY);
   const [gameState, setGameState] = useState<any | null>(null);
-  const [playerId, setPlayerId] = useState<number | null>(null);
   const [player, setPlayer] = useState<any | null>(null);
+  const [players, setPlayers] = useState<any[]>([]);
 
   const { messages, setMessages, sendMessage, isConnected } =
     useWebSocket(WS_URL);
@@ -47,11 +47,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     sortedMessages.forEach((msg) => {
       switch (msg.type) {
         case WSIncomingMessageType.JOINED_SESSION:
-          setPlayerId(msg.id);
           setAppState(AppState.WAITING);
+          setPlayers(msg.players);
+          setPlayer(msg.player);
           break;
         case WSIncomingMessageType.GAME_STATE:
-          setPlayer(msg.players.find((p: any) => p.id === playerId));
+          setPlayer(msg.player);
           setGameState(msg);
 
           if (msg.state === "betting") {
@@ -80,10 +81,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     sendMessage({ type: "quick_join", player_name: playerName });
   }
 
-  useEffect(() => {
-    console.log("Player id:", playerId);
-  }, [playerId]);
-
   return (
     <GameContext.Provider
       value={{
@@ -95,8 +92,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         quickJoin,
         sendMessage,
         isConnected,
-        playerId,
         player,
+        players,
       }}
     >
       {children}

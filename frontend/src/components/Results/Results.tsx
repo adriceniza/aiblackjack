@@ -11,7 +11,7 @@ enum RESULTS {
 }
 
 export default function Results() {
-  const { gameState, playerId } = useGame();
+  const { gameState, player } = useGame();
   const [result, setResult] = useState<RESULTS>(RESULTS.Loser);
 
   const [playWinnerSound] = useSound("/assets/sounds/winner.mp3");
@@ -25,12 +25,12 @@ export default function Results() {
 
     setResult(RESULTS.Loser);
 
-    if (gameState.winners.find((p: Player) => p.id === playerId)) {
+    if (gameState.winners.find((p: Player) => p.id === player.id)) {
       setResult(RESULTS.Winner);
       playWinnerSound();
 
       return;
-    } else if (gameState.pushes.find((p: Player) => p.id === playerId)) {
+    } else if (gameState.pushes.find((p: Player) => p.id === player.id)) {
       setResult(RESULTS.Push);
       playPushSound();
 
@@ -38,7 +38,7 @@ export default function Results() {
     }
 
     playLoserSound();
-  }, [gameState, playerId]);
+  }, [gameState, player]);
 
   if (!gameState || gameState.state !== WSMessageType.END_GAME) {
     return null;

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/adriceniza/aiblackjack/backend/internal/constants"
+	"github.com/gorilla/websocket"
 )
 
 type Game struct {
@@ -18,33 +19,44 @@ type Game struct {
 	IsStarted         bool
 }
 
-func NewGame(playerNames []string) *Game {
+func NewGame() *Game {
 	deck := NewShuffledDeck(Deck)
-	players := make([]*Player, len(playerNames))
-	for i, name := range playerNames {
-		players[i] = NewPlayer(i, name, false)
-	}
 
-	dealer := NewPlayer(players[:1][0].ID+1, "Dealer", true)
+	dealer := NewPlayer(999, "Dealer", true)
 
-	return &Game{
+	game := &Game{
 		Deck:               deck,
-		Players:            players,
+		Players:            []*Player{},
 		Dealer:             dealer,
-		CurrentPlayerIndex: players[0].ID,
+		CurrentPlayerIndex: 0,
 		WriteMutex:         sync.Mutex{},
 	}
+
+	go func() {
+		log.Println("Esperando 15 segundos para iniciar el juego")
+		time.Sleep(10 * time.Second)
+		game.IsStarted = true
+		log.Println("Iniciando fase de apuestas")
+		game.StartBettingPhase()
+	}()
+
+	return game
 }
 
-func (g *Game) AddPlayer(name string) (player *Player, err bool) {
+func (g *Game) AddPlayer(name string, conn *websocket.Conn) (player *Player, err bool) {
 	if g.IsFull() {
 		return nil, true
 	}
 
 	player = NewPlayer(len(g.Players), name, false)
+	player.Conn = conn
 	g.Players = append(g.Players, player)
 
 	log.Printf("Player %s added to the game", name)
+
+	gameState := g.GetGameStateDTO()
+	gameState.Type = constants.JOINED_SESSION
+	g.broadcast(gameState)
 	return player, false
 }
 
@@ -172,6 +184,7 @@ func (g *Game) StartBettingPhase() {
 }
 
 func (g *Game) StartRound() {
+	log.Println("start round")
 	g.State = constants.STATE_PLAYING
 	if err := g.DealInitialCards(); err != nil {
 		log.Println("Error al repartir cartas:", err)
@@ -226,7 +239,9 @@ func (g *Game) broadcast(state GameStateDTO) {
 
 	for _, p := range g.Players {
 		if p.Conn != nil {
-			if err := p.Conn.WriteJSON(state); err != nil {
+			stateCopy := state
+			stateCopy.Player = p.ConvertToDTO()
+			if err := p.Conn.WriteJSON(stateCopy); err != nil {
 				log.Println("Error sending game state:", err)
 
 				p.Conn.Close()

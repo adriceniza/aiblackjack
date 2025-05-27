@@ -17,18 +17,18 @@ type Player struct {
 	IsTurn       bool
 	HasBlackjack bool
 	Balance      int
-	CurrentBet          int
+	CurrentBet   int
 	HasPlacedBet bool
 }
 
 func NewPlayer(id int, name string, isDealer bool) *Player {
 	return &Player{
-		ID:       id,
-		Name:     name,
-		Hand:     []Card{},
-		IsDealer: isDealer,
-		Balance:  1000,
-		CurrentBet:      0,
+		ID:           id,
+		Name:         name,
+		Hand:         []Card{},
+		IsDealer:     isDealer,
+		Balance:      1000,
+		CurrentBet:   0,
 		HasPlacedBet: false,
 	}
 }

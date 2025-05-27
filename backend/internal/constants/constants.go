@@ -3,7 +3,10 @@ package constants
 const (
 	QUICK_JOIN     = "quick_join"
 	JOIN_BY_CODE   = "join_by_code"
+
 	JOINED_SESSION = "joined_session"
+	NEW_PLAYER_JOINED = "new_player_joined"
+	
 	GAME_STATE     = "game_state"
 	PLAYER_ACTION  = "player_action"
 	DEALER_ACTION  = "dealer_action"

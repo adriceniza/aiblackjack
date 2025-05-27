@@ -35,15 +35,12 @@ export default function LocalHand() {
       });
     }
 
-    useEffect(() => {
-      console.log(player);
-    }, [player]);
-
     return (
       <div className={styles.localPlayerContainer}>
         <HandCards player={player} />
         <div className={styles.actionsContainer}>
           <button
+            data-isturn={player.is_turn}
             disabled={!player.is_turn}
             className={styles.button}
             onClick={handleHit}
