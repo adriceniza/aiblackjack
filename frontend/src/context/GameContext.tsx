@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { WS_URL, WSIncomingMessageType } from "@/constants";
+import { WSIncomingMessageType } from "@/constants";
 
 export enum AppState {
   LOBBY = "LOBBY",
@@ -33,8 +33,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [player, setPlayer] = useState<any | null>(null);
   const [players, setPlayers] = useState<any[]>([]);
 
-  const { messages, setMessages, sendMessage, isConnected } =
-    useWebSocket(WS_URL);
+  const { messages, setMessages, sendMessage, isConnected } = useWebSocket(
+    process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/ws"
+  );
 
   useEffect(() => {
     if (messages.length === 0) return;
