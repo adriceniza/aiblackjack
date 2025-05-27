@@ -2,10 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { WSIncomingMessageType } from "@/constants";
-import App from "next/app";
-
-const WS_URL = "ws://localhost:8080/ws";
+import { WS_URL, WSIncomingMessageType } from "@/constants";
 
 export enum AppState {
   LOBBY = "LOBBY",
