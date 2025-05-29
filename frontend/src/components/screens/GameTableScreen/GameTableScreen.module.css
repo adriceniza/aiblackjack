@@ -1,7 +1,6 @@
 .gameTable {
     width: 100%;
     height: 100svh;
-    background-color: #395243;
     display: grid;
     grid-template-rows: 1fr 1fr;
 }
@@ -9,11 +8,10 @@
 .topDeckContainer {
     display: flex;
     justify-content: flex-start;
-    padding: 80px;
+    padding: 2rem;
 }
 
 .bottomDeckContainer {
     display: flex;
-    justify-content: flex-end;
-    padding-bottom: 80px;
+    justify-content: center;
 }

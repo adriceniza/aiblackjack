@@ -42,6 +42,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           break;
         case WSIncomingMessageType.GAME_STATE:
           setPlayer(msg.player);
+          setPlayers(msg.players);
           setDealer(msg.dealer);
           setState(msg.state);
           setWinners(msg.winners);

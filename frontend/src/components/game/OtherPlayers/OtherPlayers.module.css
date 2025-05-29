@@ -1,0 +1,36 @@
+.otherPlayers {
+  display: flex;
+  justify-content: space-between;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  width: 100svw;
+  height: 50svh;
+  pointer-events: none;
+}
+
+.leftContainer,
+.rightContainer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+.playerSlot {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 10px;
+  gap: 1rem;
+  & span {
+    text-transform: uppercase;
+    color: var(--white);
+  }
+}
+
+.rightContainer .playerSlot {
+  text-align: end;
+  align-items: flex-end;
+}

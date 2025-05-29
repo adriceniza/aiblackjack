@@ -12,8 +12,8 @@ function PlayerInfo({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.playerInfoContainer}>
       <header className={styles.playerInfoHeader}>
+        <p>{player.balance}</p>
         <p>{player.name}</p>
-        <p>Balance: {player.balance}$</p>
       </header>
       {children}
     </div>

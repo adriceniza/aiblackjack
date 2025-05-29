@@ -40,31 +40,30 @@ export default function LocalHand() {
     <div className={styles.localPlayerContainer}>
       <HandCards player={player} />
       <div className={styles.actionsContainer}>
-        <button
-          data-isturn={player.is_turn}
-          disabled={!player.is_turn}
-          className={styles.button}
-          onClick={handleHit}
-        >
-          HIT
-        </button>
-        {player.has_blackjack && (
-          <span className={styles.blackjack}>BLACKJACK</span>
-        )}
-        {player.is_busted && <span className={styles.busted}>BUSTED</span>}
-        {player.hand_value === 21 && !player.has_blackjack && (
-          <span className={styles.twentyone}>TWENTYONE</span>
+        {player.is_turn ? (
+          <button
+            data-isturn={player.is_turn}
+            disabled={!player.is_turn}
+            className={styles.button}
+            onClick={handleHit}
+          >
+            HIT
+          </button>
+        ) : (
+          <div></div>
         )}
         <div className={styles.betContainer}>
           <span>{player.current_bet}$</span>
         </div>
-        <button
-          disabled={!player.is_turn}
-          className={styles.button}
-          onClick={handleStand}
-        >
-          STAND
-        </button>
+        {player.is_turn && (
+          <button
+            disabled={!player.is_turn}
+            className={`${styles.button} ${styles.stand}`}
+            onClick={handleStand}
+          >
+            STAND
+          </button>
+        )}
       </div>
     </div>
   );

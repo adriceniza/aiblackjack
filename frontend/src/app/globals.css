@@ -1,6 +1,22 @@
+:root{
+    --background-color: #404C45;
+    --white: #FFFFFF;
+    --black: #363636;
+    --red: #FF344F;
+}
+
 body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: var(--font-rowdies);
+    font-family: var(--font-jersey) !important;
+    background-color: var(--background-color);
+}
+
+button{
+    font-family: var(--font-jersey);
+}
+
+* {
+    box-sizing: border-box;
 }

@@ -10,6 +10,7 @@ import Results from "@/components/game/Results/Results";
 import { GameState } from "@/types/game";
 import BettingScreen from "../BettingScreen/BettingScreen";
 import WaitingScreen from "../WaitingScreen/WaitingScreen";
+import OtherPlayers from "@/components/game/OtherPlayers/OtherPlayers";
 
 export default function GameTableScreen() {
   const { state } = useGame();
@@ -32,6 +33,7 @@ export default function GameTableScreen() {
       <div className={styles.bottomDeckContainer}>
         <LocalHand />
       </div>
+      <OtherPlayers />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 .lobbyContainer {
     display: flex;
     flex-direction: column;
-    background-color: #395243;
     justify-content: center;
     align-items: center;
     width: 100%;

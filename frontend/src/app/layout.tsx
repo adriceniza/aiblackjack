@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Rowdies } from "next/font/google";
+import { Jersey_20 } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/context/GameContext";
 import PlayerInfo from "@/components/game/PlayerInfo/PlayerInfo";
 
-const rowdies = Rowdies({
-  variable: "--font-rowdies",
+const jersey = Jersey_20({
+  variable: "--font-jersey",
   subsets: ["latin"],
   weight: "400",
 });
@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${rowdies.variable}`}>
+      <body className={`${jersey.variable}`}>
         <GameProvider>
           <PlayerInfo>{children}</PlayerInfo>
         </GameProvider>

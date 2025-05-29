@@ -3,13 +3,15 @@
     top: 0;
     right: 0;
     width: 100%;
-    padding: 16px 24px;
+    padding: 1rem 2rem;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 16px;
+    gap: 1rem;
     background: transparent;
     color: #ffffff;
     z-index: 10;
     box-sizing: border-box;
+    font-size: 2rem;
+    letter-spacing: 1px;
 }

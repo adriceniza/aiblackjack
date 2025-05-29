@@ -266,7 +266,7 @@ func (g *Game) NextTurn() {
 	}
 
 	for i := g.CurrentPlayerIndex + 1; i < len(g.Players); i++ {
-		if !g.Players[i].IsBusted {
+		if !g.Players[i].IsBusted && !g.Players[i].HasBlackjack {
 			g.CurrentPlayerIndex = i
 			g.Players[i].IsTurn = true
 			g.broadcast(g.GetGameStateDTO())
