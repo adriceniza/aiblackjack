@@ -240,24 +240,38 @@ func (g *Game) ResetGameForNextRound() {
 }
 
 func (g *Game) broadcast(state GameStateDTO) {
-	g.WriteMutex.Lock()
-	defer g.WriteMutex.Unlock()
-
 	state.Timestamp = time.Now().UnixMilli()
 
-	for _, p := range g.Players {
+	g.WriteMutex.Lock()
+	players := make([]*Player, len(g.Players))
+	copy(players, g.Players)
+	defer g.WriteMutex.Unlock()
+
+	var wg sync.WaitGroup
+
+	for _, p := range players {
 		if p.Conn != nil {
-			stateCopy := state
-			stateCopy.Player = p.ConvertToDTO()
+			wg.Add(1)
 
-			if err := p.Conn.WriteJSON(stateCopy); err != nil {
-				log.Println("Error sending game state:", err)
+			go func(p *Player) {
+				defer wg.Done()
 
-				p.Conn.Close()
-				p.Conn = nil
-			}
+				stateCopy := state
+				stateCopy.Player = p.ConvertToDTO()
+
+				if err := p.Conn.WriteJSON(stateCopy); err != nil {
+					log.Println("Error sending game state:", err)
+
+					g.WriteMutex.Lock()
+					p.Conn.Close()
+					p.Conn = nil
+					g.WriteMutex.Unlock()
+				}
+			}(p)
 		}
 	}
+
+	wg.Wait()
 }
 
 func (g *Game) NextTurn() {
